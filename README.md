@@ -2,13 +2,47 @@
 
 BOSS直聘 RPA 自动化工具，基于 PaddleOCR + AI 大模型，自动采集、解析和保存招聘职位 JD 描述。
 
-## 功能
+## 目录
 
-- **智能列表识别**：PaddleOCR 多策略解析聊天列表，自动识别候选人姓名和公司
-- **详情页采集**：自动点击进入详情页，滚动截取完整 JD 文本
-- **AI 合并去重**：调用大模型 API 将多段 OCR 碎片拼凑成通顺的完整 JD
-- **指纹去重**：自动记录已处理候选人，避免重复采集
-- **桌面控制台**：tkinter GUI 界面，实时日志显示，全局快捷键暂停/继续
+- [快速启动（有 Python 环境）](#快速启动有-python-环境)
+- [环境要求](#环境要求)
+- [从零开始搭建运行环境](#从零开始搭建运行环境)
+  - [第一步：安装 Python 3.12](#第一步安装-python-312)
+  - [第二步：获取项目文件](#第二步获取项目文件)
+  - [第三步：创建虚拟环境](#第三步创建虚拟环境)
+  - [第四步：安装依赖](#第四步安装依赖)
+  - [第五步：验证安装](#第五步验证安装)
+  - [第六步：配置 AI API](#第六步配置-ai-api)
+  - [第七步：启动](#第七步启动)
+- [使用流程](#使用流程)
+- [快捷键](#快捷键)
+- [项目结构](#项目结构)
+- [常见问题](#常见问题)
+- [技术栈](#技术栈)
+
+---
+
+## 快速启动（有 Python 环境）
+
+如果你已经安装了 Python 3.12，只需三步：
+
+```bash
+# 1. 进入项目目录
+cd BossjdRPA
+
+# 2. 双击 setup_and_run.bat（自动创建 venv、装依赖、装模型、启动）
+#    或者手动执行：
+python -m venv venv
+venv\Scripts\activate
+pip install pyautogui pillow numpy opencv-python requests keyboard
+pip install paddlepaddle==2.6.2 -i https://pypi.tuna.tsinghua.edu.cn/simple
+pip install "paddleocr<3.0" -i https://pypi.tuna.tsinghua.edu.cn/simple
+pythonw main.py
+```
+
+> 如果你有离线包 `ocr_offline_pack.zip`，将其解压到项目目录（和 `main.py` 同级），然后双击 `setup_and_run.bat`，全程无需网络。
+
+---
 
 ## 环境要求
 
@@ -16,13 +50,12 @@ BOSS直聘 RPA 自动化工具，基于 PaddleOCR + AI 大模型，自动采集�
 - **Python**：必须是 **3.12.x**（PaddlePaddle 目前最高只支持到 3.12）
 - **内存**：建议 8 GB 以上
 - **前置条件**：BOSS 直聘聊天页面需在屏幕上可见（网页版或桌面客户端均可）
-- **工具**：本指南只假设你有一台新电脑、一个浏览器和一个记事本，不需要任何 IDE
 
 ---
 
 ## 从零开始搭建运行环境
 
-以下步骤适合**完全没有编程环境**的新电脑。你只需要浏览器、文件资源管理器和命令提示符（cmd）。
+以下步骤适合**完全没有编程环境**的新电脑。你只需要浏览器、文件资源管理器和命令提示符（cmd），不需要任何 IDE。
 
 ### 第一步：安装 Python 3.12
 
@@ -34,19 +67,21 @@ BOSS直聘 RPA 自动化工具，基于 PaddleOCR + AI 大模型，自动采集�
 5. 等待安装完成
 
 验证安装：按 `Win + R`，输入 `cmd` 回车，在黑色窗口中输入：
+
 ```
 python --version
 ```
+
 如果显示 `Python 3.12.x`，说明安装成功。
 
 ### 第二步：获取项目文件
 
-**方式 A — 直接下载 ZIP（推荐，不需要 Git）：**
+**方式 A — 直接下载 ZIP（不需要 Git）：**
 
 1. 浏览器打开 https://github.com/Zweiehn/BossjdRPA
 2. 点击绿色的 **「<> Code」** 按钮 → **「Download ZIP」**
-3. 将下载的 `BossjdRPA-main.zip` 解压到你想要的目录，例如 `D:\BossjdRPA`
-4. 解压后的文件夹结构应该包含 `main.py`、`boss_actions.py` 等文件
+3. 将下载的 `BossjdRPA-main.zip` 解压到你想放的目录，例如 `D:\BossjdRPA`
+4. 解压后的文件夹应该包含 `main.py`、`setup_and_run.bat` 等文件
 
 **方式 B — 使用 Git（如果你装了 Git）：**
 
@@ -55,9 +90,26 @@ git clone https://github.com/Zweiehn/BossjdRPA.git
 cd BossjdRPA
 ```
 
+**（可选）下载离线依赖包：**
+
+从 [Releases](https://github.com/Zweiehn/BossjdRPA/releases) 下载 `ocr_offline_pack.zip`，解压到项目目录（和 `main.py` 同级）。目录结构会变成：
+
+```
+BossjdRPA/
+├── main.py
+├── setup_and_run.bat
+├── ocr_offline_pack/
+│   ├── wheels/             # 所有 .whl 依赖文件
+│   ├── models/             # PP-OCRv4 中文模型
+│   └── install_offline.bat
+└── ...
+```
+
+有这个包就可以全程离线安装。
+
 ### 第三步：创建虚拟环境
 
-虚拟环境能让这个项目的依赖与系统隔离，不会污染你的电脑。在 cmd 中：
+虚拟环境能将这个项目的依赖与系统隔离，互不污染。按 `Win + R`，输入 `cmd` 回车，在黑色窗口中输入：
 
 ```
 cd D:\BossjdRPA          # 进入项目目录（改成你实际的路径）
@@ -65,34 +117,29 @@ python -m venv venv      # 创建虚拟环境，会生成一个 venv 文件夹
 ```
 
 激活虚拟环境：
+
 ```
 venv\Scripts\activate
 ```
 
 激活后，命令行前面会出现 `(venv)` 字样，表示虚拟环境已生效。
-> 每次打开新 cmd 窗口运行本项目前，都要先执行这一步。
+> 每次打开新的 cmd 窗口运行本项目前，都要先 `cd` 到项目目录然后执行激活命令。
 
 ### 第四步：安装依赖
 
-确保 `(venv)` 已激活，然后：
+确保 `(venv)` 已激活（命令行前面有 `(venv)`），然后：
 
 **在线安装（有网络）：**
 
 ```bash
-# 核心依赖
 pip install pyautogui pillow numpy opencv-python requests keyboard
-
-# PaddleOCR（指定国内镜像源更快）
 pip install paddlepaddle==2.6.2 -i https://pypi.tuna.tsinghua.edu.cn/simple
 pip install "paddleocr<3.0" -i https://pypi.tuna.tsinghua.edu.cn/simple
 ```
 
-**离线安装（无网络 / 永久存档）：**
+**离线安装（已解压 ocr_offline_pack.zip 到项目目录）：**
 
-1. 从 [Releases](https://github.com/Zweiehn/BossjdRPA/releases) 下载 `ocr_offline_pack.zip`
-2. 解压到任意位置（例如桌面）
-3. 双击 `install_offline.bat`，会自动安装全部依赖和模型
-4. 回到项目目录继续下面的步骤
+直接双击 `ocr_offline_pack\install_offline.bat`，会自动完成依赖和模型安装。
 
 ### 第五步：验证安装
 
@@ -105,15 +152,15 @@ python -c "from PIL import Image; print('pillow OK')"
 python -c "import cv2; print('opencv OK')"
 ```
 
-全部显示 OK 即表示环境就绪。
+全部显示 OK 表示环境就绪。
 
 ### 第六步：配置 AI API
 
-程序依赖大模型 API 来合并 OCR 文本碎片，支持 **OpenAI 兼容接口**（Deepseek、Kimi、通义千问、智谱等）。
+程序依赖大模型 API 来合并 OCR 文本碎片，支持所有 **OpenAI 兼容接口**（Deepseek、Kimi、通义千问、智谱等）。
 
 **方式一（推荐）：** 启动程序后，点击界面上的 **「AI 设置」** 按钮，选择服务商并填入 API Key，点「测试连接」验证。
 
-**方式二：** 第一次运行程序后，项目目录会生成 `rpa_config.json`，用记事本打开，填入你的 API 信息：
+**方式二：** 第一次运行程序后，项目目录会生成 `rpa_config.json`，用记事本打开，填入：
 
 ```json
 {
@@ -135,41 +182,47 @@ pythonw main.py          # 无黑框启动，仅 GUI 界面
 python main.py           # 带终端日志启动，方便调试
 ```
 
-也可以双击项目目录下的 `start_rpa.bat` 直接启动。
+也可以直接双击项目目录下的 `setup_and_run.bat`，它会自动完成激活、检查依赖、启动。
 
 ---
 
 ## 使用流程
 
-1. 打开 BOSS 直聘聊天页面，确保列表和右侧详情区域可见
-2. 点击 **「开始」** → 鼠标框选左侧聊天列表区域
-3. 程序自动识别候选人列表后，点击第一条记录
-4. 在右侧详情页内点击一次鼠标（程序会记录这个激活位置）
-5. 框选职位详情的内容区域（从岗位名称到底部）
-6. 程序自动循环处理所有新候选人，结果保存在 `JD_Output/` 目录
+1. 打开 BOSS 直聘聊天页面，确保列表和右侧详情区域在屏幕上可见
+2. 点击 RPA 控制台的 **「开始」** → 弹出全屏遮罩，用鼠标框选左侧聊天列表区域
+3. 程序自动 OCR 识别候选人列表后，点击第一条记录进入详情
+4. 弹出提示后，在右侧详情页内点击一次鼠标（程序记录这个位置用于后续激活焦点）
+5. 再框选职位详情的内容区域（从岗位名称到底部）
+6. 程序开始自动循环：点击候选人 → 激活详情页 → 滚动采集 JD → AI 合并 → 保存到 `JD_Output/`
+7. 处理完当前屏幕后自动向下滚动列表，继续扫描新候选人
 
-后续再运行时，区域和点击位置都已记录，无需重新框选。如果窗口位置变了，点击 **「重置区域」** 按钮即可重新配置。
+后续再次运行时，区域坐标和点击位置都已保存，无需重新框选。如果窗口位置变了，点击 **「重置区域」** 按钮即可重新配置。已处理过的候选人会自动跳过，不会重复采集。
 
 ## 快捷键
 
 | 快捷键 | 功能 |
 |---|---|
 | `Ctrl + Shift + Alt + P` | 暂停 / 继续 |
-| ESC（框选时） | 取消框选 |
+| `ESC`（框选时） | 取消框选 |
 
 ## 项目结构
 
 ```
-├── main.py              # GUI 控制台主入口
-├── boss_actions.py      # 核心业务逻辑（列表解析、详情采集、缓存管理）
-├── vision_engine.py     # PaddleOCR 视觉引擎（截图、OCR、鼠标键盘操作）
-├── ai_service.py        # AI 大模型服务（文本去重、拼凑）
-├── config.py            # 配置管理（区域坐标、API 设置）
-├── screen_selector.py   # 屏幕区域框选工具
-├── start_rpa.bat        # Windows 启动脚本（无黑框）
-├── rpa_config.json      # 运行时配置（自动生成，首次运行后出现）
-├── processed_cache.json # 已处理候选人缓存（防重复采集）
-└── JD_Output/           # 采集结果输出目录
+├── main.py                 # GUI 控制台主入口
+├── boss_actions.py         # 核心业务逻辑（列表解析、详情采集、缓存管理）
+├── vision_engine.py        # PaddleOCR 视觉引擎（截图、OCR、鼠标键盘操作）
+├── ai_service.py           # AI 大模型服务（文本去重拼凑）
+├── config.py               # 配置管理（区域坐标、API 设置）
+├── screen_selector.py      # 屏幕区域框选工具
+├── setup_and_run.bat       # 一键安装启动脚本（自动建 venv + 装依赖 + 启动）
+├── start_rpa.bat           # 简单启动脚本（需要已有 venv）
+├── rpa_config.json         # 运行时配置（自动生成，含 API Key，不要上传 GitHub）
+├── processed_cache.json    # 已处理候选人缓存（防重复采集）
+├── JD_Output/              # 采集结果输出目录
+└── ocr_offline_pack/       # 离线依赖包（可选，从 Release 下载后解压在这里）
+    ├── wheels/              #   所有 .whl 离线安装文件
+    ├── models/              #   PP-OCRv4 中文模型
+    └── install_offline.bat  #   离线安装脚本
 ```
 
 ## 常见问题
@@ -178,81 +231,24 @@ python main.py           # 带终端日志启动，方便调试
 A: 确认虚拟环境已激活（命令行有 `(venv)` 前缀），然后重新执行第四步安装依赖。
 
 **Q: PaddleOCR 报错 "tuple index out of range"？**
-A: Python 版本不对。必须使用 Python 3.12.x，检查 `python --version`。
+A: Python 版本不对。必须使用 Python 3.12.x，用 `python --version` 检查。
 
 **Q: 报错包含 "oneDNN" 或 "ConvertPirAttribute"？**
-A: 你安装了 PaddlePaddle 3.x 而不是 2.6.2。卸载后重装：`pip uninstall paddlepaddle paddleocr -y`，然后重新执行第四步。
+A: 安装了 PaddlePaddle 3.x 而不是 2.6.2。卸载后重装：`pip uninstall paddlepaddle paddleocr -y`，再执行第四步。
 
-**Q: 快捷鍵 Ctrl+Shift+Alt+P 没反应？**
-A: 以管理员身份运行 cmd / PowerShell 再启动程序，keyboard 库需要管理员权限才能注册全局热键。
+**Q: 快捷键 Ctrl+Shift+Alt+P 没反应？**
+A: 以管理员身份运行 cmd 再启动程序，keyboard 库需要管理员权限才能注册全局热键。
 
 **Q: 程序无法识别列表中的候选人？**
-A: 检查 BOSS 直聘窗口是否在屏幕最前面、框选区域是否准确。查看控制台日志中的 OCR 识别结果来排查。
+A: 检查 BOSS 直聘窗口是否在最前面、框选区域是否准确。查看控制台日志中 OCR 识别到的文字来排查。
 
-**Q: 想在新电脑上用，必须重新下载所有依赖吗？**
-A: 不需要。把整个项目文件夹 + `venv` 目录一起拷贝过去、或者下载离线安装包 `ocr_offline_pack.zip` 在新电脑上运行 `install_offline.bat` 即可。
-
-## 技术栈
-
-- **OCR**: PaddleOCR 2.x (PP-OCRv4)
-- **AI**: OpenAI 兼容接口（Deepseek / Kimi / 通义千问 等）
-- **GUI**: Tkinter
-- **自动化**: PyAutoGUI
-- **图像**: OpenCV, Pillow
-
-程序依赖大模型 API 来合并 OCR 文本碎片。支持所有 **OpenAI 兼容接口**（Deepseek、Kimi、通义千问、智谱等）。
-
-**方式一**：启动程序后点击界面上的 **「AI 设置」** 按钮，选择服务商并填入 API Key，点「测试连接」验证。
-
-**方式二**：手动编辑 `rpa_config.json`（首次运行后自动生成），填入：
-```json
-{
-  "API_URL": "https://api.deepseek.com/v1",
-  "API_KEY": "sk-你的密钥",
-  "MODEL_NAME": "deepseek-chat"
-}
-```
-
-> 注意：`API_URL` 填 Base URL（不含 `/chat/completions`），程序会自动拼接完整路径。
-
-## 启动
-
-```bash
-pythonw main.py
-# 或双击 start_rpa.bat
-```
-
-## 使用流程
-
-1. 点击 **开始** → 框选左侧聊天列表区域
-2. 自动识别列表中的候选人后，点击第一条记录
-3. 在右侧详情页点击一次（激活焦点）→ 框选详情内容区域
-4. 程序自动循环处理所有新候选人，结果保存在 `JD_Output/` 目录
-
-## 快捷键
-
-| 快捷键 | 功能 |
-|---|---|
-| `Ctrl + Shift + Alt + P` | 暂停 / 继续 |
-
-## 项目结构
-
-```
-├── main.py              # GUI 控制台主入口
-├── boss_actions.py      # 核心业务逻辑（列表解析、详情采集、缓存管理）
-├── vision_engine.py     # PaddleOCR 视觉引擎（截图、OCR、鼠标键盘操作）
-├── ai_service.py        # AI 大模型服务（文本去重、拼凑）
-├── config.py            # 配置管理（区域坐标、API 设置）
-├── screen_selector.py   # 屏幕区域框选工具
-├── start_rpa.bat        # Windows 启动脚本（无黑框）
-├── rpa_config.json      # 运行时配置（自动生成）
-└── JD_Output/           # 采集结果输出目录
-```
+**Q: 新电脑不想重新下载所有依赖？**
+A: 从 Release 下载离线包 `ocr_offline_pack.zip`，解压到项目目录后双击 `setup_and_run.bat`，全程离线安装。或者直接把整个项目文件夹（含 `venv/`）拷贝到新电脑。
 
 ## 技术栈
 
-- **OCR**: PaddleOCR 2.x (PP-OCRv4)
-- **AI**: OpenAI 兼容接口（Deepseek / Kimi / 通义千问 等）
-- **GUI**: Tkinter
-- **自动化**: PyAutoGUI
-- **图像**: OpenCV, Pillow
+- **OCR**: PaddleOCR 2.x (PP-OCRv4) + PaddlePaddle 2.6.2
+- **AI**: OpenAI 兼容接口（Deepseek / Kimi / 通义千问 / 智谱 等）
+- **GUI**: Tkinter + ScrolledText
+- **自动化**: PyAutoGUI + keyboard
+- **图像**: OpenCV + Pillow + NumPy
