@@ -27,8 +27,8 @@ class RPAGUI:
     def __init__(self, root):
         self.root = root
         self.root.title("RPA 控制台")
-        self.root.geometry("550x380")
-        self.root.resizable(False, False)  # 禁止拉伸
+        self.root.geometry("650x500")
+        self.root.minsize(500, 380)  # 允许拉伸，但限制最小尺寸
 
         # 顶部按钮区域
         top_frame = tk.Frame(self.root)
