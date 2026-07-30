@@ -2,14 +2,14 @@
 set "PROJECT_DIR=%~dp0"
 
 :: Check: venv
-if exist "%PROJECT_DIR%venv\Scripts\python.exe" (
-    start "" "%PROJECT_DIR%venv\Scripts\python.exe" "%PROJECT_DIR%main.py"
+if exist "%PROJECT_DIR%venv\Scripts\pythonw.exe" (
+    start "" "%PROJECT_DIR%venv\Scripts\pythonw.exe" "%PROJECT_DIR%main.py"
     exit
 )
 
 :: Check: embedded python
-if exist "%PROJECT_DIR%python\python.exe" (
-    start "" "%PROJECT_DIR%python\python.exe" "%PROJECT_DIR%main.py"
+if exist "%PROJECT_DIR%python\pythonw.exe" (
+    start "" "%PROJECT_DIR%python\pythonw.exe" "%PROJECT_DIR%main.py"
     exit
 )
 
