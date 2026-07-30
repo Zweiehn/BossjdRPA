@@ -2,21 +2,21 @@
 set "PROJECT_DIR=%~dp0"
 
 :: Check: venv
-if exist "%PROJECT_DIR%venv\Scripts\pythonw.exe" (
-    start "" "%PROJECT_DIR%venv\Scripts\pythonw.exe" "%PROJECT_DIR%main.py"
+if exist "%PROJECT_DIR%venv\Scripts\python.exe" (
+    start "" "%PROJECT_DIR%venv\Scripts\python.exe" "%PROJECT_DIR%main.py"
     exit
 )
 
 :: Check: embedded python
-if exist "%PROJECT_DIR%python\pythonw.exe" (
-    start "" "%PROJECT_DIR%python\pythonw.exe" "%PROJECT_DIR%main.py"
+if exist "%PROJECT_DIR%python\python.exe" (
+    start "" "%PROJECT_DIR%python\python.exe" "%PROJECT_DIR%main.py"
     exit
 )
 
 :: Check: system python
-where pythonw >nul 2>&1
+where python >nul 2>&1
 if %errorlevel%==0 (
-    start "" pythonw "%PROJECT_DIR%main.py"
+    start "" python "%PROJECT_DIR%main.py"
     exit
 )
 
@@ -25,7 +25,6 @@ echo ========================================
 echo   Cannot start - No Python found!
 echo ========================================
 echo.
-echo   Run setup_and_run.bat first to auto-install Python.
-echo   It only needs to run once.
+echo   Run setup_and_run.bat first.
 echo.
 pause
