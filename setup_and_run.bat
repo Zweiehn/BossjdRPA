@@ -195,7 +195,8 @@ if not exist "%PROJECT_DIR%rpa_config.json" (
 )
 
 echo [7/7] Starting...
-start "" "!RUN_PYTHON!" "%PROJECT_DIR%main.py"
+set "PYTHONW=!RUN_PYTHON:python.exe=pythonw.exe!"
+start "" "!PYTHONW!" "%PROJECT_DIR%main.py"
 echo   RPA Console launched!
 echo ========================================
 echo.
