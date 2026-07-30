@@ -38,8 +38,14 @@ if exist "%EMBED_DIR%\python.exe" (
     echo !V! | find "3.12" >nul
     if !errorlevel!==0 (
         set "RUN_PYTHON=%EMBED_DIR%\python.exe"
-        set "RUN_PIP=%EMBED_DIR%\python.exe -m pip"
-        echo   Using embedded Python ^(!V!^)
+        echo   Found embedded Python ^(!V!^)
+        :: Check if pip is installed
+        "%EMBED_DIR%\python.exe" -m pip --version >nul 2>&1
+        if !errorlevel! neq 0 (
+            echo   pip not found, installing...
+            call :install_pip_embed
+            if !errorlevel! neq 0 (pause & exit /b 1)
+        )
         goto :install_deps
     )
 )
@@ -237,17 +243,25 @@ echo Lib\site-packages
 mkdir "%EMBED_DIR%\Lib\site-packages" 2>nul
 
 :: Install pip
-echo   Installing pip...
+call :install_pip_embed
+exit /b !errorlevel!
+
+:: ============================================
+:: Subroutine: install pip into embedded Python
+:: ============================================
+:install_pip_embed
+echo   Installing pip into embedded Python...
 powershell -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; try { Invoke-WebRequest -Uri 'https://bootstrap.pypa.io/get-pip.py' -OutFile '%TEMP%\get-pip.py' -UseBasicParsing -TimeoutSec 60 } catch { exit 1 }" >nul 2>&1
 
 if not exist "%TEMP%\get-pip.py" (
-    echo   Failed to download pip installer.
+    echo   Failed to download pip installer. Check network.
     exit /b 1
 )
 
 "%EMBED_DIR%\python.exe" "%TEMP%\get-pip.py" -q 2>&1
 if !errorlevel! neq 0 (
-    echo   Failed to install pip into embedded Python.
+    del "%TEMP%\get-pip.py" 2>nul
+    echo   Failed to install pip.
     exit /b 1
 )
 
