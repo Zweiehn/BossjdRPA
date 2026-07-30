@@ -193,6 +193,10 @@ echo [7/7] Starting...
 start "" "!RUN_PYTHON!" "%PROJECT_DIR%main.py"
 echo   RPA Console launched!
 echo ========================================
+echo.
+echo   You can now close this window.
+echo   Next time just double-click start_rpa.bat
+pause
 exit /b 0
 
 :: ============================================
