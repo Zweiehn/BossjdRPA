@@ -31,6 +31,17 @@ pip install "paddleocr<3.0" -i https://pypi.tuna.tsinghua.edu.cn/simple
 pip install keyboard -i https://pypi.tuna.tsinghua.edu.cn/simple
 ```
 
+## 离线安装（无需网络，推荐存档）
+
+如果网络不稳定或希望永久保存依赖，使用离线安装包：
+
+1. 从 [Releases](https://github.com/Zweiehn/BossjdRPA/releases) 下载 `ocr_offline_pack.zip`（约 311 MB）
+2. 解压到任意目录
+3. 双击 `install_offline.bat`，自动完成全部依赖和模型安装
+4. 安装完成后即可 `pythonw main.py` 启动
+
+离线包包含：PaddlePaddle 2.6.2、PaddleOCR 2.x、PyAutoGUI、OpenCV、Pillow 等全部依赖的 `.whl` 文件，以及 PP-OCRv4 中文模型。
+
 ## 配置 AI API
 
 程序依赖大模型 API 来合并 OCR 文本碎片。支持所有 **OpenAI 兼容接口**（Deepseek、Kimi、通义千问、智谱等）。
