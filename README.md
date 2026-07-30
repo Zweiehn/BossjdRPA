@@ -10,19 +10,43 @@ BOSS直聘 RPA 自动化工具，基于 PaddleOCR + AI 大模型，自动采集�
 - **指纹去重**：自动记录已处理候选人，避免重复采集
 - **桌面控制台**：tkinter GUI 界面，实时日志显示，全局快捷键暂停/继续
 
+## 环境要求
+
+- **操作系统**：仅限 Windows（依赖 PyAutoGUI 和 keyboard 库的 Windows API）
+- **Python**：3.8 ~ 3.12
+- **前置条件**：BOSS 直聘聊天页面需在屏幕上可见（网页版或桌面客户端均可）
+- **首次启动**会自动下载 PaddleOCR 模型文件（约 100MB，仅一次），需要网络连接
+
 ## 安装
 
 ```bash
-# 1. 安装依赖
+# 1. 克隆仓库
+git clone https://github.com/Zweiehn/BossjdRPA.git
+cd BossjdRPA
+
+# 2. 安装依赖
 pip install pyautogui pillow numpy opencv-python requests
 pip install paddlepaddle==2.6.2 -i https://pypi.tuna.tsinghua.edu.cn/simple
 pip install "paddleocr<3.0" -i https://pypi.tuna.tsinghua.edu.cn/simple
 pip install keyboard -i https://pypi.tuna.tsinghua.edu.cn/simple
-
-# 2. 配置 API
-# 打开程序后点击「AI 设置」按钮，选择服务商并填入 API Key
-# 或直接编辑 rpa_config.json
 ```
+
+## 配置 AI API
+
+程序依赖大模型 API 来合并 OCR 文本碎片。支持所有 **OpenAI 兼容接口**（Deepseek、Kimi、通义千问、智谱等）。
+
+**方式一**：启动程序后点击界面上的 **「AI 设置」** 按钮，选择服务商并填入 API Key，点「测试连接」验证。
+
+**方式二**：手动编辑 `rpa_config.json`（首次运行后自动生成），填入：
+```json
+{
+  "API_URL": "https://api.deepseek.com/v1",
+  "API_KEY": "sk-你的密钥",
+  "MODEL_NAME": "deepseek-chat"
+}
+```
+
+> 注意：`API_URL` 填 Base URL（不含 `/chat/completions`），程序会自动拼接完整路径。
 
 ## 启动
 
