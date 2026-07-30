@@ -32,21 +32,27 @@ if exist "%VENV_DIR%\Scripts\python.exe" (
     rmdir /s /q "%VENV_DIR%"
 )
 
-:: B. Check if embedded Python already set up
+:: B. Check if embedded Python already set up (legacy - will redirect to full install)
 if exist "%EMBED_DIR%\python.exe" (
     for /f "delims=" %%v in ('"%EMBED_DIR%\python.exe" --version 2^>^&1') do set "V=%%v"
     echo !V! | find "3.12" >nul
     if !errorlevel!==0 (
-        set "RUN_PYTHON=%EMBED_DIR%\python.exe"
-        echo   Found embedded Python ^(!V!^)
-        :: Check if pip is installed
-        "%EMBED_DIR%\python.exe" -m pip --version >nul 2>&1
+        :: Check if tkinter works (embedded Python lacks it)
+        "%EMBED_DIR%\python.exe" -c "import tkinter" 2>nul
         if !errorlevel! neq 0 (
-            echo   pip not found, installing...
-            call :install_pip_embed
-            if !errorlevel! neq 0 (pause & exit /b 1)
+            echo   Embedded Python lacks tkinter - will download full Python instead.
+            rmdir /s /q "%EMBED_DIR%"
+        ) else (
+            set "RUN_PYTHON=%EMBED_DIR%\python.exe"
+            echo   Found embedded Python ^(!V!^)
+            "%EMBED_DIR%\python.exe" -m pip --version >nul 2>&1
+            if !errorlevel! neq 0 (
+                echo   pip not found, downloading full Python instead.
+                rmdir /s /q "%EMBED_DIR%"
+            ) else (
+                goto :install_deps
+            )
         )
-        goto :install_deps
     )
 )
 
@@ -82,19 +88,18 @@ for %%d in (
     )
 )
 
-:: E. Not found -> auto-download embedded Python
-echo   Python 3.12 not found. Downloading embedded version...
-echo   (about 10 MB, one-time only)
+:: E. Not found -> auto-download and install full Python
+echo   Python 3.12 not found. Downloading full installer...
+echo   (about 25 MB, one-time only. This includes tkinter.)
 echo.
-call :download_embedded
+call :download_full_python
 if !errorlevel! neq 0 (
     pause
     exit /b 1
 )
-set "RUN_PYTHON=%EMBED_DIR%\python.exe"
-set "RUN_PIP=%EMBED_DIR%\python.exe -m pip"
-echo   Embedded Python %PY_VER% ready.
-goto :install_deps
+:: Full Python installed - use it to create venv
+set "SYSTEM_PYTHON=%PYTHON%"
+goto :create_venv
 
 :: ============================================
 :: Venv path (when system Python found)
@@ -200,74 +205,74 @@ pause
 exit /b 0
 
 :: ============================================
-:: Subroutine: download and setup embedded Python
+:: Subroutine: download and install full Python (includes tkinter)
 :: ============================================
-:download_embedded
-set "URL1=https://www.python.org/ftp/python/%PY_VER%/python-%PY_VER%-embed-amd64.zip"
-set "URL2=https://registry.npmmirror.com/-/binary/python/%PY_VER%/python-%PY_VER%-embed-amd64.zip"
-set "ZIP=%TEMP%\pyembed.zip"
+:download_full_python
+set "INSTALLER=python-%PY_VER%-amd64.exe"
+set "URL1=https://www.python.org/ftp/python/%PY_VER%/%INSTALLER%"
+set "URL2=https://registry.npmmirror.com/-/binary/python/%PY_VER%/%INSTALLER%"
+set "EXE=%TEMP%\%INSTALLER%"
 
 echo   Trying: %URL1%
-powershell -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; try { Invoke-WebRequest -Uri '%URL1%' -OutFile '%ZIP%' -UseBasicParsing -TimeoutSec 60 } catch { exit 1 }" >nul 2>&1
+powershell -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; try { Invoke-WebRequest -Uri '%URL1%' -OutFile '%EXE%' -UseBasicParsing -TimeoutSec 180 } catch { exit 1 }" >nul 2>&1
 
-if not exist "%ZIP%" (
+if not exist "%EXE%" (
     echo   Mirror: %URL2%
-    powershell -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; try { Invoke-WebRequest -Uri '%URL2%' -OutFile '%ZIP%' -UseBasicParsing -TimeoutSec 60 } catch { exit 1 }" >nul 2>&1
+    powershell -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; try { Invoke-WebRequest -Uri '%URL2%' -OutFile '%EXE%' -UseBasicParsing -TimeoutSec 180 } catch { exit 1 }" >nul 2>&1
 )
 
-if not exist "%ZIP%" (
-    echo   DOWNLOAD FAILED. Check network and try again.
+if not exist "%EXE%" (
+    echo   DOWNLOAD FAILED. Check network.
+    echo   You can manually install Python 3.12 from:
+    echo   https://www.python.org/downloads/
     exit /b 1
 )
 
-for %%f in ("%ZIP%") do set /a "SZ=%%~zf/1024/1024"
-if !SZ! lss 5 (
+for %%f in ("%EXE%") do set /a "SZ=%%~zf/1024/1024"
+if !SZ! lss 15 (
     echo   Download corrupted ^(!SZ! MB^)
-    del "%ZIP%" 2>nul
+    del "%EXE%" 2>nul
     exit /b 1
 )
 echo   Downloaded !SZ! MB.
 
-:: Extract
-echo   Extracting...
-if exist "%EMBED_DIR%" rmdir /s /q "%EMBED_DIR%"
-mkdir "%EMBED_DIR%"
-powershell -Command "Expand-Archive -Path '%ZIP%' -DestinationPath '%EMBED_DIR%' -Force" >nul 2>&1
-del "%ZIP%" 2>nul
+:: Silent install (no UI, user-level, add to PATH)
+echo   Installing Python %PY_VER% (silent, please wait)...
+"%EXE%" /quiet InstallAllUsers=0 PrependPath=1 Include_test=0 Include_pip=1
+set "INSTALL_OK=!errorlevel!"
 
-:: Configure ._pth file (enable site-packages)
-(
-echo python312.zip
-echo .
-echo import site
-echo Lib\site-packages
-) > "%EMBED_DIR%\python312._pth"
+:: Wait for install to complete
+timeout /t 5 /nobreak >nul
 
-:: Create site-packages
-mkdir "%EMBED_DIR%\Lib\site-packages" 2>nul
-
-:: Install pip
-call :install_pip_embed
-exit /b !errorlevel!
-
-:: ============================================
-:: Subroutine: install pip into embedded Python
-:: ============================================
-:install_pip_embed
-echo   Installing pip into embedded Python...
-powershell -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; try { Invoke-WebRequest -Uri 'https://bootstrap.pypa.io/get-pip.py' -OutFile '%TEMP%\get-pip.py' -UseBasicParsing -TimeoutSec 60 } catch { exit 1 }" >nul 2>&1
-
-if not exist "%TEMP%\get-pip.py" (
-    echo   Failed to download pip installer. Check network.
-    exit /b 1
+:: Find the installed Python
+set "PYTHON="
+for %%d in (
+    "%LOCALAPPDATA%\Programs\Python\Python312"
+    "%LOCALAPPDATA%\Programs\Python\Python312-32"
+    "C:\Program Files\Python312"
+    "%PROGRAMFILES%\Python312"
+) do (
+    if exist "%%d\python.exe" (
+        set "PYTHON=%%d\python.exe"
+        goto :full_python_found
+    )
 )
 
-"%EMBED_DIR%\python.exe" "%TEMP%\get-pip.py" -q 2>&1
-if !errorlevel! neq 0 (
-    del "%TEMP%\get-pip.py" 2>nul
-    echo   Failed to install pip.
-    exit /b 1
+:: Fallback: refresh PATH and try
+set "PATH=%PATH%;%LOCALAPPDATA%\Programs\Python\Python312;%LOCALAPPDATA%\Programs\Python\Python312\Scripts"
+where python >nul 2>&1
+if !errorlevel!==0 (
+    for /f "delims=" %%v in ('python --version 2^>^&1') do echo   Found via PATH: %%v
+    set "PYTHON=python"
+    goto :full_python_found
 )
 
-del "%TEMP%\get-pip.py" 2>nul
+echo   Install seemed to succeed but cannot find python.exe
+echo   Try rebooting or installing manually.
+pause
+exit /b 1
+
+:full_python_found
+echo   Full Python installed.
+del "%EXE%" 2>nul
 exit /b 0
