@@ -4,17 +4,11 @@ BOSS直聘 RPA 自动化工具，基于 PaddleOCR + AI 大模型，自动采集�
 
 ## 目录
 
-- [快速启动（有 Python 环境）](#快速启动有-python-环境)
-- [环境要求](#环境要求)
-- [从零开始搭建运行环境](#从零开始搭建运行环境)
-  - [第一步：安装 Python 3.12](#第一步安装-python-312)
-  - [第二步：获取项目文件](#第二步获取项目文件)
-  - [第三步：创建虚拟环境](#第三步创建虚拟环境)
-  - [第四步：安装依赖](#第四步安装依赖)
-  - [第五步：验证安装](#第五步验证安装)
-  - [第六步：配置 AI API](#第六步配置-ai-api)
-  - [第七步：启动](#第七步启动)
+- [首次使用（必读）](#首次使用必读)
+- [两个 bat 的分工](#两个-bat-的分工)
+- [离线安装（无网络环境）](#离线安装无网络环境)
 - [使用流程](#使用流程)
+- [从零手动搭建（高级）](#从零手动搭建高级)
 - [快捷键](#快捷键)
 - [项目结构](#项目结构)
 - [常见问题](#常见问题)
@@ -22,40 +16,68 @@ BOSS直聘 RPA 自动化工具，基于 PaddleOCR + AI 大模型，自动采集�
 
 ---
 
-## 快速启动（有 Python 环境）
+## 首次使用（必读）
 
-如果你已经安装了 Python 3.12，只需三步：
+无论你的电脑有没有装 Python，拿到项目后只需做**一件事**：
 
-```bash
-# 1. 进入项目目录
-cd BossjdRPA
+**双击 `setup_and_run.bat`**
 
-# 2. 双击 setup_and_run.bat（自动创建 venv、装依赖、装模型、启动）
-#    或者手动执行：
-python -m venv venv
-venv\Scripts\activate
-pip install pyautogui pillow numpy opencv-python requests keyboard
-pip install paddlepaddle==2.6.2 -i https://pypi.tuna.tsinghua.edu.cn/simple
-pip install "paddleocr<3.0" -i https://pypi.tuna.tsinghua.edu.cn/simple
-pythonw main.py
+它会自动完成以下全部工作：
+
+| 步骤 | 做了什么 |
+|---|---|
+| ① | 检测你的电脑有没有 Python 3.12 |
+| ② | 没有就**自动下载并安装完整 Python 3.12**（约 25 MB，含 tkinter GUI 支持） |
+| ③ | 创建虚拟环境（`venv/`），隔离项目依赖 |
+| ④ | 安装全部 Python 依赖包（优先用离线包，没有就走网络） |
+| ⑤ | 安装 PaddleOCR 中文识别模型 |
+| ⑥ | 启动 RPA 控制台 |
+
+**整个过程全自动，你只需要双击一次，之后再也不需要这个文件。** 首次运行需要网络下载 Python 和依赖（约 300 MB），之后的使用不需要网络。
+
+## 两个 bat 的分工
+
+| 文件 | 什么时候用 | 要不要网络 |
+|---|---|---|
+| `setup_and_run.bat` | **只在新电脑上跑一次** | 首次需要（下载 Python + 依赖），有离线包则不需要 |
+| `start_rpa.bat` | **日常启动** | 不需要 |
+
+记住这条规则就够：**新电脑跑 `setup_and_run`，日常用 `start_rpa`。**
+
+## 离线安装（无网络环境）
+
+如果目标电脑**完全没有网络**，先在**有网络的电脑**上：
+
+1. 从 [Releases](https://github.com/Zweiehn/BossjdRPA/releases) 下载 `ocr_offline_pack.zip`（约 314 MB）
+2. 把 `ocr_offline_pack.zip` 解压到项目目录（和 `main.py` 同级），目录结构如下：
+
+```
+BossjdRPA/
+├── main.py
+├── setup_and_run.bat
+├── start_rpa.bat
+├── ocr_offline_pack/          ← 离线包解压在这儿
+│   ├── wheels/                ← 所有 .whl 文件
+│   └── models/                ← PP-OCRv4 中文模型
+└── ...
 ```
 
-> 如果你有离线包 `ocr_offline_pack.zip`，将其解压到项目目录（和 `main.py` 同级），然后双击 `setup_and_run.bat`，全程无需网络。
+3. 把整个 `BossjdRPA` 文件夹拷贝到目标电脑
+4. 双击 `setup_and_run.bat`（仍需首次网络下载 Python 安装器 ~25 MB；如果连这个网络都没有，先手动装 Python 3.12 再跑）
 
 ---
 
-## 环境要求
+## 从零手动搭建（高级）
 
-- **操作系统**：仅限 Windows 10 / 11（依赖 PyAutoGUI 和 keyboard 的 Windows API）
-- **Python**：必须是 **3.12.x**（PaddlePaddle 目前最高只支持到 3.12）
+> 正常情况下你不需要看这一节——`setup_and_run.bat` 已经全自动了。
+> 以下适合想理解每一步在做什么、或者 bat 脚本无法运行时手动排查的人。
+
+### 环境要求
+
+- **操作系统**：仅限 Windows 10 / 11
+- **Python**：必须是 **3.12.x**（PaddlePaddle 最高只支持到 3.12）
 - **内存**：建议 8 GB 以上
-- **前置条件**：BOSS 直聘聊天页面需在屏幕上可见（网页版或桌面客户端均可）
-
----
-
-## 从零开始搭建运行环境
-
-以下步骤适合**完全没有编程环境**的新电脑。你只需要浏览器、文件资源管理器和命令提示符（cmd），不需要任何 IDE。
+- **前置条件**：BOSS 直聘聊天页面需在屏幕上可见
 
 ### 第一步：安装 Python 3.12
 
