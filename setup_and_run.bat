@@ -129,20 +129,20 @@ echo.
 echo [4/7] Installing dependencies...
 if exist "%OFFLINE_DIR%\wheels" (
     echo   Using offline pack...
-    "!RUN_PIP!" install --no-index --find-links="%OFFLINE_DIR%\wheels" setuptools wheel -q 2>&1
+    "!RUN_PYTHON!" -m pip install --no-index --find-links="%OFFLINE_DIR%\wheels" setuptools wheel -q 2>&1
     if !errorlevel! neq 0 (
         echo   Build tools install failed.
         pause & exit /b 1
     )
-    "!RUN_PIP!" install --no-index --find-links="%OFFLINE_DIR%\wheels" pyautogui pillow numpy opencv-python requests paddlepaddle==2.6.2 "paddleocr<3.0" keyboard 2>&1
+    "!RUN_PYTHON!" -m pip install --no-index --find-links="%OFFLINE_DIR%\wheels" pyautogui pillow numpy opencv-python requests paddlepaddle==2.6.2 "paddleocr<3.0" keyboard 2>&1
 ) else (
     echo   Offline pack not found. Downloading from internet...
     echo   If this fails, download ocr_offline_pack.zip from Releases.
-    "!RUN_PIP!" install pyautogui pillow numpy opencv-python requests keyboard -i https://pypi.tuna.tsinghua.edu.cn/simple 2>&1
+    "!RUN_PYTHON!" -m pip install pyautogui pillow numpy opencv-python requests keyboard -i https://pypi.tuna.tsinghua.edu.cn/simple 2>&1
     if !errorlevel! neq 0 (pause & exit /b 1)
-    "!RUN_PIP!" install paddlepaddle==2.6.2 -i https://pypi.tuna.tsinghua.edu.cn/simple 2>&1
+    "!RUN_PYTHON!" -m pip install paddlepaddle==2.6.2 -i https://pypi.tuna.tsinghua.edu.cn/simple 2>&1
     if !errorlevel! neq 0 (pause & exit /b 1)
-    "!RUN_PIP!" install "paddleocr<3.0" -i https://pypi.tuna.tsinghua.edu.cn/simple 2>&1
+    "!RUN_PYTHON!" -m pip install "paddleocr<3.0" -i https://pypi.tuna.tsinghua.edu.cn/simple 2>&1
 )
 
 if !errorlevel! neq 0 (
