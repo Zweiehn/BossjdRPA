@@ -1,21 +1,21 @@
 @echo off
 set "PROJECT_DIR=%~dp0"
 
-:: 1. venv (set up by setup_and_run.bat)
-if exist "%PROJECT_DIR%venv\Scripts\pythonw.exe" (
-    "%PROJECT_DIR%venv\Scripts\pythonw.exe" -c "import tkinter" >nul 2>&1
-    if %errorlevel%==0 (
-        start "" "%PROJECT_DIR%venv\Scripts\pythonw.exe" "%PROJECT_DIR%main.py"
-        exit
-    )
-)
-
-:: 2. System Python (user already had it installed)
+:: Check: system pythonw (most common case)
 where pythonw >nul 2>&1
 if %errorlevel%==0 (
     pythonw -c "import tkinter; import paddleocr" >nul 2>&1
     if %errorlevel%==0 (
         start "" pythonw "%PROJECT_DIR%main.py"
+        exit
+    )
+)
+
+:: Check: venv (set up by setup_and_run.bat on other machines)
+if exist "%PROJECT_DIR%venv\Scripts\pythonw.exe" (
+    "%PROJECT_DIR%venv\Scripts\pythonw.exe" -c "import tkinter; import paddleocr" >nul 2>&1
+    if %errorlevel%==0 (
+        start "" "%PROJECT_DIR%venv\Scripts\pythonw.exe" "%PROJECT_DIR%main.py"
         exit
     )
 )
